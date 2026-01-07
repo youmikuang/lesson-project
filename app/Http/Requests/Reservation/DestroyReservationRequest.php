@@ -17,7 +17,7 @@ class DestroyReservationRequest extends FormRequest
         $reservation = $this->route('reservation');
 
         // 验证是否是用户自己的预约
-        if ($reservation->user_id !== $this->user()->id) {
+        if ($reservation->user_id !== request()->get('user_id')) {
             throw ReservationException::unauthorized();
         }
 

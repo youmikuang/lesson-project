@@ -33,11 +33,11 @@ class ReservationController extends Controller
     {
         $result = $this->reservationService->createReservation(
             $course,
-            $request->getUserId()
+            $request->get('user_id'),
         );
 
         $resource = (new ReservationResource($result['reservation']))
-            ->withMessage($result['message']);
+            ->withMessage($result['msg']);
 
         // 添加剩余名额信息（仅确认预约时）
         if (isset($result['remaining_slots'])) {
@@ -74,13 +74,13 @@ class ReservationController extends Controller
             $data['promoted_reservation'] = [
                 'reservation_id' => $result['promoted_reservation']->id,
                 'user_id' => $result['promoted_reservation']->user_id,
-                'message' => '候补用户已自动递补',
+                'msg' => '候补用户已自动递补',
             ];
         }
 
         return response()->json([
-            'success' => true,
-            'message' => '预约已取消',
+            'ret' => 0,
+            'msg' => '预约已取消',
             'data' => $data,
         ]);
     }

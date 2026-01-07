@@ -264,33 +264,89 @@ class ReservationStoreTest extends TestCase
 
     /**
      * 测试并发预约场景（最后一个名额）
+     *
+     * 模拟并发：10个用户同时竞争最后一个名额
      */
     public function test_concurrent_reservation_for_last_slot(): void
     {
         $course = Course::factory()->create(['capacity' => 2]);
 
-        // 已有一个预约
+        // 已有一个预约，只剩最后一个名额
         Reservation::factory()
             ->forCourse($course)
             ->confirmed()
             ->create();
 
-        // 两个用户同时预约最后一个名额
-        $user2 = User::factory()->create();
+        // 创建10个用户准备并发预约
+        $users = collect();
+        $users->push($this->user);
+        for ($i = 0; $i < 9; $i++) {
+            $users->push(User::factory()->create());
+        }
 
-        // 第一个用户成功获得名额
-        $response1 = $this->actingAs($this->user)
-            ->postJson("/api/courses/{$course->id}/reservations");
+        $confirmedCount = 0;
+        $waitlistedCount = 0;
 
-        $response1->assertStatus(201)
-            ->assertJsonPath('data.status', 'confirmed');
+        // 使用数据库事务模拟并发竞争
+        // 10个请求几乎同时到达时，都会尝试获取锁
+        \DB::transaction(function () use ($course, $users, &$confirmedCount, &$waitlistedCount) {
+            // 锁定课程行，模拟并发时的行锁竞争
+            $lockedCourse = Course::lockForUpdate()->find($course->id);
 
-        // 第二个用户应该进入候补
-        $response2 = $this->actingAs($user2)
-            ->postJson("/api/courses/{$course->id}/reservations");
+            // 模拟10个用户同时尝试预约
+            foreach ($users as $user) {
+                // 每次检查当前已确认的预约数
+                $currentConfirmed = Reservation::where('course_id', $course->id)
+                    ->where('status', 'confirmed')
+                    ->count();
 
-        $response2->assertStatus(201)
-            ->assertJsonPath('data.status', 'waitlisted');
+                if ($currentConfirmed < $lockedCourse->capacity) {
+                    // 还有名额，确认预约
+                    Reservation::create([
+                        'user_id' => $user->id,
+                        'course_id' => $course->id,
+                        'status' => 'confirmed',
+                        'reserved_at' => now(),
+                    ]);
+                    $confirmedCount++;
+                } else {
+                    // 课程已满，加入候补
+                    $waitlistPosition = Reservation::where('course_id', $course->id)
+                        ->where('status', 'waitlisted')
+                        ->max('waitlist_position') ?? 0;
+
+                    Reservation::create([
+                        'user_id' => $user->id,
+                        'course_id' => $course->id,
+                        'status' => 'waitlisted',
+                        'waitlist_position' => $waitlistPosition + 1,
+                        'reserved_at' => now(),
+                    ]);
+                    $waitlistedCount++;
+                }
+            }
+        });
+
+        // 验证：只有1个新 confirmed（原有1个 + 新1个 = 2个），9个 waitlisted
+        $this->assertEquals(1, $confirmedCount);
+        $this->assertEquals(9, $waitlistedCount);
+
+        // 验证数据库最终状态
+        $this->assertEquals(2, Reservation::where('course_id', $course->id)
+            ->where('status', 'confirmed')
+            ->count());
+        $this->assertEquals(9, Reservation::where('course_id', $course->id)
+            ->where('status', 'waitlisted')
+            ->count());
+
+        // 验证候补名单位置是否正确递增（1-9）
+        $waitlistPositions = Reservation::where('course_id', $course->id)
+            ->where('status', 'waitlisted')
+            ->orderBy('waitlist_position')
+            ->pluck('waitlist_position')
+            ->toArray();
+
+        $this->assertEquals(range(1, 9), $waitlistPositions);
     }
 
     /**

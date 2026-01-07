@@ -34,6 +34,9 @@ class CourseController extends Controller
     public function index(ListCoursesRequest $request)
     {
         $data = $this->courseService->getAvailableCourses($request->filters());
-        return $this->jsonResponse(0, 'OK', $data);
+        return $this->jsonResponse(0, 'OK', [
+            'total' => $data->total(),
+            'data' => $data->items(),
+        ]);
     }
 }

@@ -3,6 +3,7 @@
 use App\Exceptions\BusinessException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,6 +24,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (BusinessException $e, Request $request) {
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json($e->toArray(), $e->getHttpStatusCode());
+            }
+        });
+        // 处理业务异常
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'ret' => false,
+                    'msg' => "数据未找到，参数错误",
+                    'data' => [],
+                ], 404);
             }
         });
 
