@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->unsignedInteger('capacity')->default(30);
+            $table->unsignedInteger('capacity')->default(0);
             $table->dateTime('scheduled_at');
             $table->unsignedInteger('duration_minutes')->default(60);
             $table->enum('status', ['open', 'closed', 'cancelled', 'completed'])->default('open');

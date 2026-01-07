@@ -1,0 +1,171 @@
+{
+	"info": {
+		"_postman_id": "lesson-project-api",
+		"name": "Lesson Project API",
+		"description": "课程预约系统 API 接口集合",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "课程管理",
+			"item": [
+				{
+					"name": "获取课程列表",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/courses?start_date=&end_date=&available_only=&sort_by=scheduled_at&sort_order=asc&per_page=15",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"courses"
+							],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "",
+									"description": "开始日期筛选 (YYYY-MM-DD)"
+								},
+								{
+									"key": "end_date",
+									"value": "",
+									"description": "结束日期筛选 (YYYY-MM-DD)"
+								},
+								{
+									"key": "available_only",
+									"value": "",
+									"description": "只显示有空位的课程 (true/false)"
+								},
+								{
+									"key": "sort_by",
+									"value": "scheduled_at",
+									"description": "排序字段 (scheduled_at|name|capacity|remaining_slots|created_at)"
+								},
+								{
+									"key": "sort_order",
+									"value": "asc",
+									"description": "排序方向 (asc|desc)"
+								},
+								{
+									"key": "per_page",
+									"value": "15",
+									"description": "每页数量 (1-100, 默认15)"
+								}
+							]
+						},
+						"description": "获取可用课程列表，支持日期筛选、空位筛选和排序"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "预约管理",
+			"item": [
+				{
+					"name": "预约课程",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/courses/:course_id/reservations",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"courses",
+								":course_id",
+								"reservations"
+							],
+							"variable": [
+								{
+									"key": "course_id",
+									"value": "1",
+									"description": "课程 ID"
+								}
+							]
+						},
+						"description": "预约指定课程。有空位时直接确认预约，无空位时加入候补名单。需要认证。"
+					},
+					"response": []
+				},
+				{
+					"name": "取消预约",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reservations/:reservation_id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reservations",
+								":reservation_id"
+							],
+							"variable": [
+								{
+									"key": "reservation_id",
+									"value": "1",
+									"description": "预约 ID"
+								}
+							]
+						},
+						"description": "取消指定预约。如果取消的是已确认预约，系统会自动递补候补名单第一位。需要认证。"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

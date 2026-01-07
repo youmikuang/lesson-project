@@ -2,16 +2,16 @@
 
 ## 1. courses 课程表
 
-| 字段             | 类型     | 说明                                  |
-|------------------|----------|---------------------------------------|
-| id               | bigint   | 主键                                  |
-| name             | varchar  | 课程名称                              |
-| description      | text     | 课程描述                              |
-| capacity         | int      | 容量上限，默认30人                    |
-| scheduled_at     | datetime | 课程时间                              |
-| duration_minutes | int      | 课程时长（分钟）                      |
+| 字段             | 类型     | 说明                                 |
+|------------------|----------|--------------------------------------|
+| id               | bigint   | 主键                                 |
+| name             | varchar  | 课程名称                             |
+| description      | text     | 课程描述                             |
+| capacity         | int      | 容量上限，默认0人                    |
+| scheduled_at     | datetime | 课程时间                             |
+| duration_minutes | int      | 课程时长（分钟）                     |
 | status           | enum     | 状态：open/closed/cancelled/completed |
-| timestamps       | -        | 创建/更新时间                         |
+| timestamps       | -        | 创建/更新时间                        |
 
 索引设计：
 - scheduled_at - 按时间查询

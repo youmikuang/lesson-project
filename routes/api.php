@@ -5,7 +5,6 @@ use App\Http\Controllers\ReservationController;
 use Illuminate\Support\Facades\Route;
 
 // 公开接口
-Route::get('/', [CourseController::class, 'test']);
 Route::get('/courses', [CourseController::class, 'index']);
 
 // 需要认证的接口
